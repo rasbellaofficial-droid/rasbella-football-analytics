@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 from datetime import datetime, timedelta
@@ -78,24 +79,39 @@ def send_telegram(message):
 # ============================================================
 
 def get_odds(entries, market_names, value_names=None):
+
     if not isinstance(entries, list):
         return []
 
     results = []
 
     for item in entries:
-        market = str(item.get("market", "")).strip().lower()
-        value = str(item.get("value", "")).strip().lower()
 
-        if not any(name in market for name in market_names):
+        market = str(
+            item.get("market", "")
+        ).strip().lower()
+
+        value = str(
+            item.get("value", "")
+        ).strip().lower()
+
+        if not any(
+            name in market
+            for name in market_names
+        ):
             continue
 
         if value_names:
-            if not any(name in value for name in value_names):
+
+            if not any(
+                name in value
+                for name in value_names
+            ):
                 continue
 
         try:
             odd = float(item.get("odd"))
+
         except:
             continue
 
@@ -104,24 +120,44 @@ def get_odds(entries, market_names, value_names=None):
     return results
 
 
-def exact_odd(entries, market, value, target, tolerance=0.011):
+def exact_odd(
+    entries,
+    market,
+    value,
+    target,
+    tolerance=0.011
+):
+
     odds = get_odds(
         entries,
         [market.lower()],
         [value.lower()]
     )
 
-    return any(abs(odd - target) <= tolerance for odd in odds)
+    return any(
+        abs(odd - target) <= tolerance
+        for odd in odds
+    )
 
 
-def odd_range(entries, market_names, value_names, low, high):
+def odd_range(
+    entries,
+    market_names,
+    value_names,
+    low,
+    high
+):
+
     odds = get_odds(
         entries,
         [x.lower() for x in market_names],
         [x.lower() for x in value_names]
     )
 
-    return any(low <= odd <= high for odd in odds)
+    return any(
+        low <= odd <= high
+        for odd in odds
+    )
 
 
 # ============================================================
@@ -129,6 +165,7 @@ def odd_range(entries, market_names, value_names, low, high):
 # ============================================================
 
 def recent_form(team_id, season, today):
+
     yesterday = today - timedelta(days=1)
 
     data = api_get(
@@ -136,7 +173,9 @@ def recent_form(team_id, season, today):
         {
             "team": team_id,
             "season": season,
-            "from": (yesterday - timedelta(days=90)).strftime("%Y-%m-%d"),
+            "from": (
+                yesterday - timedelta(days=90)
+            ).strftime("%Y-%m-%d"),
             "to": yesterday.strftime("%Y-%m-%d"),
             "status": "FT"
         }
@@ -146,7 +185,11 @@ def recent_form(team_id, season, today):
 
     fixtures = sorted(
         fixtures,
-        key=lambda x: x.get("fixture", {}).get("date", ""),
+        key=lambda x: x.get(
+            "fixture", {}
+        ).get(
+            "date", ""
+        ),
         reverse=True
     )[:5]
 
@@ -168,16 +211,29 @@ def recent_form(team_id, season, today):
         home_goals = goals.get("home")
         away_goals = goals.get("away")
 
-        if home_goals is None or away_goals is None:
+        if (
+            home_goals is None
+            or away_goals is None
+        ):
             continue
 
         is_home = home_id == team_id
 
-        team_goals = home_goals if is_home else away_goals
-        opponent_goals = away_goals if is_home else home_goals
+        team_goals = (
+            home_goals
+            if is_home
+            else away_goals
+        )
+
+        opponent_goals = (
+            away_goals
+            if is_home
+            else home_goals
+        )
 
         # Criterion 7
         if team_goals > opponent_goals:
+
             wins += 1
 
             # Criterion 8
@@ -185,7 +241,9 @@ def recent_form(team_id, season, today):
                 win_by_2 += 1
 
         # Criterion 9
-        total_goals = home_goals + away_goals
+        total_goals = (
+            home_goals + away_goals
+        )
 
         if (
             home_goals >= 1
@@ -228,9 +286,15 @@ def main():
         }
     )
 
-    fixtures = fixture_data.get("response", [])
+    fixtures = fixture_data.get(
+        "response",
+        []
+    )
 
-    print("Today's fixtures:", len(fixtures))
+    print(
+        "Today's fixtures:",
+        len(fixtures)
+    )
 
     if not fixtures:
         print("No fixtures found.")
@@ -243,11 +307,19 @@ def main():
     candidates = []
 
     print()
-    print("Checking prediction confidence...")
+    print(
+        "Checking prediction confidence..."
+    )
 
-    for index, match in enumerate(fixtures[:MAX_PREDICTION_CHECKS], 1):
+    for index, match in enumerate(
+        fixtures[:MAX_PREDICTION_CHECKS],
+        1
+    ):
 
-        fixture_id = match.get("fixture", {}).get("id")
+        fixture_id = match.get(
+            "fixture",
+            {}
+        ).get("id")
 
         if not fixture_id:
             continue
@@ -259,34 +331,69 @@ def main():
             }
         )
 
-        prediction_response = prediction_data.get("response", [])
+        prediction_response = (
+            prediction_data.get(
+                "response",
+                []
+            )
+        )
 
         if not prediction_response:
             continue
 
-        prediction = prediction_response[0].get("predictions", {})
+        prediction = (
+            prediction_response[0]
+            .get("predictions", {})
+        )
 
-        percent = prediction.get("percent", {})
+        percent = prediction.get(
+            "percent",
+            {}
+        )
 
         try:
+
             home_conf = float(
-                str(percent.get("home", "0")).replace("%", "")
+                str(
+                    percent.get(
+                        "home",
+                        "0"
+                    )
+                ).replace("%", "")
             )
+
         except:
+
             home_conf = 0
 
         try:
+
             draw_conf = float(
-                str(percent.get("draw", "0")).replace("%", "")
+                str(
+                    percent.get(
+                        "draw",
+                        "0"
+                    )
+                ).replace("%", "")
             )
+
         except:
+
             draw_conf = 0
 
         try:
+
             away_conf = float(
-                str(percent.get("away", "0")).replace("%", "")
+                str(
+                    percent.get(
+                        "away",
+                        "0"
+                    )
+                ).replace("%", "")
             )
+
         except:
+
             away_conf = 0
 
         confidence = max(
@@ -295,24 +402,49 @@ def main():
             away_conf
         )
 
-        home_name = match["teams"]["home"]["name"]
-        away_name = match["teams"]["away"]["name"]
+        home_name = match[
+            "teams"
+        ][
+            "home"
+        ][
+            "name"
+        ]
+
+        away_name = match[
+            "teams"
+        ][
+            "away"
+        ][
+            "name"
+        ]
 
         print(
-            f"{index:02d} | {home_name} vs {away_name} | "
+            f"{index:02d} | "
+            f"{home_name} vs {away_name} | "
             f"Confidence: {confidence:.0f}%"
         )
 
-        # Criterion 10 must pass before spending more API requests
+        # Criterion 10 must pass
+        # before spending more API requests
+
         if confidence >= 75:
 
-            match["prediction_data"] = prediction_data
-            match["confidence"] = confidence
+            match[
+                "prediction_data"
+            ] = prediction_data
+
+            match[
+                "confidence"
+            ] = confidence
 
             candidates.append(match)
 
     print()
-    print("75%+ candidates:", len(candidates))
+
+    print(
+        "75%+ candidates:",
+        len(candidates)
+    )
 
     # --------------------------------------------------------
     # 3. CHECK ODDS + FORM
@@ -322,17 +454,34 @@ def main():
 
     for match in candidates:
 
-        fixture_id = match["fixture"]["id"]
+        fixture_id = match[
+            "fixture"
+        ][
+            "id"
+        ]
 
-        home = match["teams"]["home"]
-        away = match["teams"]["away"]
+        home = match[
+            "teams"
+        ][
+            "home"
+        ]
+
+        away = match[
+            "teams"
+        ][
+            "away"
+        ]
 
         home_name = home["name"]
         away_name = away["name"]
 
         print()
         print("-" * 70)
-        print(home_name, "vs", away_name)
+        print(
+            home_name,
+            "vs",
+            away_name
+        )
 
         # ----------------------------------------------------
         # ODDS
@@ -345,26 +494,54 @@ def main():
             }
         )
 
-        odds_response = odds_data.get("response", [])
+        odds_response = odds_data.get(
+            "response",
+            []
+        )
 
         parsed_odds = []
 
         for bookmaker_block in odds_response:
 
-            bookmaker = bookmaker_block.get("bookmaker", {})
-            bookmaker_name = bookmaker.get("name", "")
+            bookmaker = (
+                bookmaker_block.get(
+                    "bookmaker",
+                    {}
+                )
+            )
 
-            for bet in bookmaker_block.get("bets", []):
+            bookmaker_name = bookmaker.get(
+                "name",
+                ""
+            )
 
-                market = bet.get("name", "")
+            for bet in bookmaker_block.get(
+                "bets",
+                []
+            ):
 
-                for value_item in bet.get("values", []):
+                market = bet.get(
+                    "name",
+                    ""
+                )
 
-                    value = value_item.get("value", "")
-                    odd = value_item.get("odd")
+                for value_item in bet.get(
+                    "values",
+                    []
+                ):
+
+                    value = value_item.get(
+                        "value",
+                        ""
+                    )
+
+                    odd = value_item.get(
+                        "odd"
+                    )
 
                     try:
                         odd = float(odd)
+
                     except:
                         continue
 
@@ -394,8 +571,14 @@ def main():
 
         c2 = odd_range(
             parsed_odds,
-            ["results/both teams score"],
-            ["home/yes", "draw/yes", "away/yes"],
+            [
+                "results/both teams score"
+            ],
+            [
+                "home/yes",
+                "draw/yes",
+                "away/yes"
+            ],
             1.60,
             1.75
         )
@@ -407,8 +590,12 @@ def main():
 
         c3 = odd_range(
             parsed_odds,
-            ["goals over/under"],
-            ["over 2.5"],
+            [
+                "goals over/under"
+            ],
+            [
+                "over 2.5"
+            ],
             1.45,
             1.60
         )
@@ -432,8 +619,13 @@ def main():
 
         c5 = odd_range(
             parsed_odds,
-            ["results/both teams score"],
-            ["home/yes", "away/yes"],
+            [
+                "results/both teams score"
+            ],
+            [
+                "home/yes",
+                "away/yes"
+            ],
             1.80,
             2.20
         )
@@ -449,7 +641,9 @@ def main():
                 "home team total goals",
                 "away team total goals"
             ],
-            ["over 1.5"],
+            [
+                "over 1.5"
+            ],
             1.40,
             1.50
         )
@@ -458,7 +652,12 @@ def main():
         # RECENT FORM
         # ----------------------------------------------------
 
-        season = match.get("league", {}).get("season")
+        season = match.get(
+            "league",
+            {}
+        ).get(
+            "season"
+        )
 
         home_form = recent_form(
             home["id"],
@@ -500,7 +699,8 @@ def main():
 
         # ----------------------------------------------------
         # CRITERION 9
-        # BTTS + Over 2.5 in at least 3 of last 5
+        # BTTS + Over 2.5
+        # in at least 3 of last 5
         # ----------------------------------------------------
 
         c9 = (
@@ -516,32 +716,52 @@ def main():
         # Prediction confidence >= 75%
         # ----------------------------------------------------
 
-        c10 = match["confidence"] >= 75
+        c10 = (
+            match["confidence"] >= 75
+        )
 
         criteria = [
-            c1, c2, c3, c4, c5,
-            c6, c7, c8, c9, c10
+            c1,
+            c2,
+            c3,
+            c4,
+            c5,
+            c6,
+            c7,
+            c8,
+            c9,
+            c10
         ]
 
         score = sum(criteria)
 
         print()
         print("CRITERIA:")
-        for i, result in enumerate(criteria, 1):
+
+        for i, result in enumerate(
+            criteria,
+            1
+        ):
+
             print(
-                f"{i:02d}. {'PASS' if result else 'FAIL'}"
+                f"{i:02d}. "
+                f"{'PASS' if result else 'FAIL'}"
             )
 
         print()
+
         print(
             f"SCORE: {score}/10"
         )
 
         if score == 10:
+
             qualified.append({
                 "home": home_name,
                 "away": away_name,
-                "confidence": match["confidence"]
+                "confidence": match[
+                    "confidence"
+                ]
             })
 
     # ========================================================
@@ -553,31 +773,58 @@ def main():
 
     if not qualified:
 
-        print("NO MATCH PASSED ALL 10 CRITERIA.")
-        print("No Telegram alert will be sent.")
+        print(
+            "NO MATCH PASSED ALL 10 CRITERIA."
+        )
+
+        print(
+            "No Telegram alert will be sent."
+        )
 
         return
 
-    message = "🔥 RASBELLA FOOTBALL ALERT 🔥\n\n"
-    message += "Matches passing ALL 10 criteria:\n\n"
+    message = (
+        "🔥 RASBELLA FOOTBALL ALERT 🔥\n\n"
+    )
 
-    for number, match in enumerate(qualified, 1):
+    message += (
+        "Matches passing ALL 10 criteria:\n\n"
+    )
+
+    for number, match in enumerate(
+        qualified,
+        1
+    ):
 
         message += (
-            f"{number}. {match['home']} vs {match['away']}\n"
+            f"{number}. "
+            f"{match['home']} vs "
+            f"{match['away']}\n"
             f"Prediction confidence: "
             f"{match['confidence']:.0f}%\n\n"
         )
 
-    message += "✅ All 10 criteria passed."
+    message += (
+        "✅ All 10 criteria passed."
+    )
 
     send_telegram(message)
 
-    print("Telegram alert sent.")
-    print("Qualified:", len(qualified))
+    print(
+        "Telegram alert sent."
+    )
+
+    print(
+        "Qualified:",
+        len(qualified)
+    )
 
     print("=" * 70)
 
+
+# ============================================================
+# START PROGRAM
+# ============================================================
 
 if __name__ == "__main__":
     main()
