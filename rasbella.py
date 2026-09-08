@@ -1,5 +1,4 @@
 rasbella.py
-import os
 import time
 import requests
 from datetime import datetime, timedelta
